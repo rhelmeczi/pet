@@ -7,11 +7,11 @@ from typing import Dict, List
 import numpy as np
 import random
 import torch
-from transformers import PreTrainedTokenizer, RobertaTokenizer
+from transformers import PreTrainedTokenizer, RobertaTokenizer, AutoTokenizer
 
 from pet.tasks import PROCESSORS, load_examples, TRAIN_SET
 from pet.utils import InputExample, eq_div
-from pet.wrapper import TransformerModelWrapper, MODEL_CLASSES, WrapperConfig
+from pet.wrapper import TransformerModelWrapper, WrapperConfig
 import log
 
 logger = log.get_logger("root")
@@ -343,7 +343,7 @@ def main():
     else:
         word_counts = None
 
-    tokenizer_class = MODEL_CLASSES[args.model_type]["tokenizer"]
+    tokenizer_class = AutoTokenizer
     tokenizer = tokenizer_class.from_pretrained(args.model_name_or_path)
     word2idx = get_word_to_id_map(
         tokenizer, word_counts=word_counts, max_words=args.max_words

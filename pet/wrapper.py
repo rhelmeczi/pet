@@ -28,30 +28,10 @@ from transformers import (
     InputExample,
     AdamW,
     get_linear_schedule_with_warmup,
-    PreTrainedTokenizer,
-    BertForMaskedLM,
-    RobertaForMaskedLM,
-    XLMRobertaForMaskedLM,
-    XLNetConfig,
-    XLNetForSequenceClassification,
-    XLNetTokenizer,
-    XLNetLMHeadModel,
-    BertConfig,
-    BertForSequenceClassification,
-    BertTokenizer,
-    RobertaConfig,
-    RobertaForSequenceClassification,
-    RobertaTokenizer,
-    XLMRobertaConfig,
-    XLMRobertaForSequenceClassification,
-    XLMRobertaTokenizer,
-    AlbertForSequenceClassification,
-    AlbertForMaskedLM,
-    AlbertTokenizer,
-    AlbertConfig,
-    GPT2Config,
-    GPT2LMHeadModel,
-    GPT2Tokenizer,
+    AutoConfig,
+    AutoModelForMaskedLM,
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
 )
 from transformers import __version__ as transformers_version
 
@@ -73,44 +53,6 @@ PREPROCESSORS = {
     SEQUENCE_CLASSIFIER_WRAPPER: preprocessor.SequenceClassifierPreprocessor,
     MLM_WRAPPER: preprocessor.MLMPreprocessor,
     PLM_WRAPPER: preprocessor.PLMPreprocessor,
-}
-
-MODEL_CLASSES = {
-    "bert": {
-        "config": BertConfig,
-        "tokenizer": BertTokenizer,
-        SEQUENCE_CLASSIFIER_WRAPPER: BertForSequenceClassification,
-        MLM_WRAPPER: BertForMaskedLM,
-    },
-    "roberta": {
-        "config": RobertaConfig,
-        "tokenizer": RobertaTokenizer,
-        SEQUENCE_CLASSIFIER_WRAPPER: RobertaForSequenceClassification,
-        MLM_WRAPPER: RobertaForMaskedLM,
-    },
-    "xlm-roberta": {
-        "config": XLMRobertaConfig,
-        "tokenizer": XLMRobertaTokenizer,
-        SEQUENCE_CLASSIFIER_WRAPPER: XLMRobertaForSequenceClassification,
-        MLM_WRAPPER: XLMRobertaForMaskedLM,
-    },
-    "xlnet": {
-        "config": XLNetConfig,
-        "tokenizer": XLNetTokenizer,
-        SEQUENCE_CLASSIFIER_WRAPPER: XLNetForSequenceClassification,
-        PLM_WRAPPER: XLNetLMHeadModel,
-    },
-    "albert": {
-        "config": AlbertConfig,
-        "tokenizer": AlbertTokenizer,
-        SEQUENCE_CLASSIFIER_WRAPPER: AlbertForSequenceClassification,
-        MLM_WRAPPER: AlbertForMaskedLM,
-    },
-    "gpt2": {
-        "config": GPT2Config,
-        "tokenizer": GPT2Tokenizer,
-        MLM_WRAPPER: GPT2LMHeadModel,
-    },
 }
 
 EVALUATION_STEP_FUNCTIONS = {
@@ -165,15 +107,23 @@ class WrapperConfig(object):
         self.cache_dir = cache_dir
 
 
+def get_model_class(wrapper_type: str):
+    if wrapper_type == "mlm":
+        return AutoModelForMaskedLM
+    elif wrapper_type == "sequence_classifier":
+        return AutoModelForSequenceClassification
+    raise ValueError(f"unsupported wrapper_type: {wrapper_type}")
+
+
 class TransformerModelWrapper:
     """A wrapper around a Transformer-based language model."""
 
     def __init__(self, config: WrapperConfig):
         """Create a new wrapper from the given config."""
         self.config = config
-        config_class = MODEL_CLASSES[self.config.model_type]["config"]
-        tokenizer_class = MODEL_CLASSES[self.config.model_type]["tokenizer"]
-        model_class = MODEL_CLASSES[self.config.model_type][self.config.wrapper_type]
+        config_class = AutoConfig
+        tokenizer_class = AutoTokenizer
+        model_class = get_model_class(config.wrapper_type)
 
         model_config = config_class.from_pretrained(
             config.model_name_or_path,
@@ -186,7 +136,7 @@ class TransformerModelWrapper:
         self.tokenizer = tokenizer_class.from_pretrained(
             config.model_name_or_path,
             cache_dir=config.cache_dir if config.cache_dir else None,
-        )  # type: PreTrainedTokenizer
+        )
 
         if self.config.model_type == "gpt2":
             self.tokenizer.pad_token, self.tokenizer.mask_token = (
@@ -221,10 +171,8 @@ class TransformerModelWrapper:
         """Load a pretrained wrapper from a given path."""
         wrapper = TransformerModelWrapper.__new__(TransformerModelWrapper)
         wrapper.config = wrapper._load_config(path)
-        tokenizer_class = MODEL_CLASSES[wrapper.config.model_type]["tokenizer"]
-        model_class = MODEL_CLASSES[wrapper.config.model_type][
-            wrapper.config.wrapper_type
-        ]
+        tokenizer_class = AutoTokenizer
+        model_class = get_model_class(wrapper.config.wrapper_type)
         wrapper.model = model_class.from_pretrained(path)
         wrapper.tokenizer = tokenizer_class.from_pretrained(path)
         wrapper.preprocessor = PREPROCESSORS[wrapper.config.wrapper_type](
