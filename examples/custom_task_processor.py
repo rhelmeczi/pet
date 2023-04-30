@@ -63,7 +63,9 @@ class MyTaskDataProcessor(DataProcessor):
         :param data_dir: the directory in which the training data can be found
         :return: a list of train examples
         """
-        return self._create_examples(os.path.join(data_dir, MyTaskDataProcessor.TRAIN_FILE_NAME), "train")
+        return self._create_examples(
+            os.path.join(data_dir, MyTaskDataProcessor.TRAIN_FILE_NAME), "train"
+        )
 
     def get_dev_examples(self, data_dir: str) -> List[InputExample]:
         """
@@ -71,7 +73,9 @@ class MyTaskDataProcessor(DataProcessor):
         :param data_dir: the directory in which the dev data can be found
         :return: a list of dev examples
         """
-        return self._create_examples(os.path.join(data_dir, MyTaskDataProcessor.DEV_FILE_NAME), "dev")
+        return self._create_examples(
+            os.path.join(data_dir, MyTaskDataProcessor.DEV_FILE_NAME), "dev"
+        )
 
     def get_test_examples(self, data_dir) -> List[InputExample]:
         """
@@ -79,7 +83,9 @@ class MyTaskDataProcessor(DataProcessor):
         :param data_dir: the directory in which the test data can be found
         :return: a list of test examples
         """
-        return self._create_examples(os.path.join(data_dir, MyTaskDataProcessor.TEST_FILE_NAME), "test")
+        return self._create_examples(
+            os.path.join(data_dir, MyTaskDataProcessor.TEST_FILE_NAME), "test"
+        )
 
     def get_unlabeled_examples(self, data_dir) -> List[InputExample]:
         """
@@ -87,7 +93,9 @@ class MyTaskDataProcessor(DataProcessor):
         :param data_dir: the directory in which the unlabeled data can be found
         :return: a list of unlabeled examples
         """
-        return self._create_examples(os.path.join(data_dir, MyTaskDataProcessor.UNLABELED_FILE_NAME), "unlabeled")
+        return self._create_examples(
+            os.path.join(data_dir, MyTaskDataProcessor.UNLABELED_FILE_NAME), "unlabeled"
+        )
 
     def get_labels(self) -> List[str]:
         """This method returns all possible labels for the task."""
@@ -98,13 +106,19 @@ class MyTaskDataProcessor(DataProcessor):
         examples = []
 
         with open(path) as f:
-            reader = csv.reader(f, delimiter=',')
+            reader = csv.reader(f, delimiter=",")
             for idx, row in enumerate(reader):
                 guid = "%s-%s" % (set_type, idx)
                 label = row[MyTaskDataProcessor.LABEL_COLUMN]
                 text_a = row[MyTaskDataProcessor.TEXT_A_COLUMN]
-                text_b = row[MyTaskDataProcessor.TEXT_B_COLUMN] if MyTaskDataProcessor.TEXT_B_COLUMN >= 0 else None
-                example = InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label)
+                text_b = (
+                    row[MyTaskDataProcessor.TEXT_B_COLUMN]
+                    if MyTaskDataProcessor.TEXT_B_COLUMN >= 0
+                    else None
+                )
+                example = InputExample(
+                    guid=guid, text_a=text_a, text_b=text_b, label=label
+                )
                 examples.append(example)
 
         return examples

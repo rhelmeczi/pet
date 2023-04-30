@@ -39,23 +39,23 @@ class LogitsList:
         self.logits = logits
 
     def __repr__(self):
-        return 'LogitsList(score={}, logits[:2]={})'.format(self.score, self.logits[:2])
+        return "LogitsList(score={}, logits[:2]={})".format(self.score, self.logits[:2])
 
     def save(self, path: str) -> None:
         """Save this list to a file."""
-        with open(path, 'w') as fh:
-            fh.write(str(self.score) + '\n')
+        with open(path, "w") as fh:
+            fh.write(str(self.score) + "\n")
             for example_logits in self.logits:
-                fh.write(' '.join(str(logit) for logit in example_logits) + '\n')
+                fh.write(" ".join(str(logit) for logit in example_logits) + "\n")
 
     @staticmethod
-    def load(path: str, with_score: bool = True) -> 'LogitsList':
+    def load(path: str, with_score: bool = True) -> "LogitsList":
         """Load a list from a file"""
         score = -1
         logits = []
-        with open(path, 'r') as fh:
+        with open(path, "r") as fh:
             for line_idx, line in enumerate(fh.readlines()):
-                line = line.rstrip('\n')
+                line = line.rstrip("\n")
                 if line_idx == 0 and with_score:
                     score = float(line)
                 else:
@@ -66,7 +66,16 @@ class LogitsList:
 class InputExample(object):
     """A raw input example consisting of one or two segments of text and a label"""
 
-    def __init__(self, guid, text_a, text_b=None, label=None, logits=None, meta: Optional[Dict] = None, idx=-1):
+    def __init__(
+        self,
+        guid,
+        text_a,
+        text_b=None,
+        label=None,
+        logits=None,
+        meta: Optional[Dict] = None,
+        idx=-1,
+    ):
         """
         Create a new InputExample.
 
@@ -99,23 +108,32 @@ class InputExample(object):
         return json.dumps(self.to_dict(), indent=2, sort_keys=True) + "\n"
 
     @staticmethod
-    def load_examples(path: str) -> List['InputExample']:
+    def load_examples(path: str) -> List["InputExample"]:
         """Load a set of input examples from a file"""
-        with open(path, 'rb') as fh:
+        with open(path, "rb") as fh:
             return pickle.load(fh)
 
     @staticmethod
-    def save_examples(examples: List['InputExample'], path: str) -> None:
+    def save_examples(examples: List["InputExample"], path: str) -> None:
         """Save a set of input examples to a file"""
-        with open(path, 'wb') as fh:
+        with open(path, "wb") as fh:
             pickle.dump(examples, fh)
 
 
 class InputFeatures(object):
     """A set of numeric features obtained from an :class:`InputExample`"""
 
-    def __init__(self, input_ids, attention_mask, token_type_ids, label, mlm_labels=None, logits=None,
-                 meta: Optional[Dict] = None, idx=-1):
+    def __init__(
+        self,
+        input_ids,
+        attention_mask,
+        token_type_ids,
+        label,
+        mlm_labels=None,
+        logits=None,
+        meta: Optional[Dict] = None,
+        idx=-1,
+    ):
         """
         Create new InputFeatures.
 
@@ -141,12 +159,14 @@ class InputFeatures(object):
         return str(self.to_json_string())
 
     def pretty_print(self, tokenizer):
-        return f'input_ids         = {tokenizer.convert_ids_to_tokens(self.input_ids)}\n' + \
-               f'attention_mask    = {self.attention_mask}\n' + \
-               f'token_type_ids    = {self.token_type_ids}\n' + \
-               f'mlm_labels        = {self.mlm_labels}\n' + \
-               f'logits            = {self.logits}\n' + \
-               f'label             = {self.label}'
+        return (
+            f"input_ids         = {tokenizer.convert_ids_to_tokens(self.input_ids)}\n"
+            + f"attention_mask    = {self.attention_mask}\n"
+            + f"token_type_ids    = {self.token_type_ids}\n"
+            + f"mlm_labels        = {self.mlm_labels}\n"
+            + f"logits            = {self.logits}\n"
+            + f"label             = {self.label}"
+        )
 
     def to_dict(self):
         """Serialize this instance to a Python dictionary."""
@@ -167,9 +187,12 @@ class PLMInputFeatures(InputFeatures):
         self.target_mapping = target_mapping
 
     def pretty_print(self, tokenizer):
-        return super().pretty_print(tokenizer) + '\n' + \
-               f'perm_mask         = {self.perm_mask}\n' + \
-               f'target_mapping    = {self.target_mapping}'
+        return (
+            super().pretty_print(tokenizer)
+            + "\n"
+            + f"perm_mask         = {self.perm_mask}\n"
+            + f"target_mapping    = {self.target_mapping}"
+        )
 
 
 class DictDataset(Dataset):
@@ -178,7 +201,10 @@ class DictDataset(Dataset):
     def __init__(self, **tensors):
         tensors.values()
 
-        assert all(next(iter(tensors.values())).size(0) == tensor.size(0) for tensor in tensors.values())
+        assert all(
+            next(iter(tensors.values())).size(0) == tensor.size(0)
+            for tensor in tensors.values()
+        )
         self.tensors = tensors
 
     def __getitem__(self, index):
@@ -189,7 +215,7 @@ class DictDataset(Dataset):
 
 
 def set_seed(seed: int):
-    """ Set RNG seeds for python's `random` module, numpy and torch"""
+    """Set RNG seeds for python's `random` module, numpy and torch"""
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -198,14 +224,14 @@ def set_seed(seed: int):
 
 
 def eq_div(N, i):
-    """ Equally divide N examples among i buckets. For example, `eq_div(12,3) = [4,4,4]`. """
+    """Equally divide N examples among i buckets. For example, `eq_div(12,3) = [4,4,4]`."""
     return [] if i <= 0 else [N // i + 1] * (N % i) + [N // i] * (i - N % i)
 
 
 def chunks(lst, n):
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
-        yield lst[i:i + n]
+        yield lst[i : i + n]
 
 
 def remove_final_punc(s: str):
@@ -220,9 +246,9 @@ def lowercase_first(s: str):
 
 def save_logits(path: str, logits: np.ndarray):
     """Save an array of logits to a file"""
-    with open(path, 'w') as fh:
+    with open(path, "w") as fh:
         for example_logits in logits:
-            fh.write(' '.join(str(logit) for logit in example_logits) + '\n')
+            fh.write(" ".join(str(logit) for logit in example_logits) + "\n")
     pass
 
 
@@ -233,15 +259,17 @@ def save_predictions(path: str, wrapper, results: Dict):
     if wrapper.task_helper and wrapper.task_helper.output:
         predictions_with_idx = wrapper.task_helper.output
     else:
-        inv_label_map = {idx: label for label, idx in wrapper.preprocessor.label_map.items()}
-        for idx, prediction_idx in zip(results['indices'], results['predictions']):
+        inv_label_map = {
+            idx: label for label, idx in wrapper.preprocessor.label_map.items()
+        }
+        for idx, prediction_idx in zip(results["indices"], results["predictions"]):
             prediction = inv_label_map[prediction_idx]
             idx = idx.tolist() if isinstance(idx, np.ndarray) else int(idx)
-            predictions_with_idx.append({'idx': idx, 'label': prediction})
+            predictions_with_idx.append({"idx": idx, "label": prediction})
 
-    with open(path, 'w', encoding='utf8') as fh:
+    with open(path, "w", encoding="utf8") as fh:
         for line in predictions_with_idx:
-            fh.write(json.dumps(line) + '\n')
+            fh.write(json.dumps(line) + "\n")
 
 
 def softmax(x, temperature=1.0, axis=None):
@@ -263,7 +291,9 @@ def softmax(x, temperature=1.0, axis=None):
     return p
 
 
-def get_verbalization_ids(word: str, tokenizer: PreTrainedTokenizer, force_single_token: bool) -> Union[int, List[int]]:
+def get_verbalization_ids(
+    word: str, tokenizer: PreTrainedTokenizer, force_single_token: bool
+) -> Union[int, List[int]]:
     """
     Get the token ids corresponding to a verbalization
 
@@ -274,19 +304,23 @@ def get_verbalization_ids(word: str, tokenizer: PreTrainedTokenizer, force_singl
            corresponds to multiple tokens.
     :return: either the list of token ids or the single token id corresponding to this word
     """
-    kwargs = {'add_prefix_space': True} if isinstance(tokenizer, GPT2Tokenizer) else {}
+    kwargs = {"add_prefix_space": True} if isinstance(tokenizer, GPT2Tokenizer) else {}
     ids = tokenizer.encode(word, add_special_tokens=False, **kwargs)
     if not force_single_token:
         return ids
-    assert len(ids) == 1, \
-        f'Verbalization "{word}" does not correspond to a single token, got {tokenizer.convert_ids_to_tokens(ids)}'
+    assert (
+        len(ids) == 1
+    ), f'Verbalization "{word}" does not correspond to a single token, got {tokenizer.convert_ids_to_tokens(ids)}'
     verbalization_id = ids[0]
-    assert verbalization_id not in tokenizer.all_special_ids, \
-        f'Verbalization {word} is mapped to a special token {tokenizer.convert_ids_to_tokens(verbalization_id)}'
+    assert (
+        verbalization_id not in tokenizer.all_special_ids
+    ), f"Verbalization {word} is mapped to a special token {tokenizer.convert_ids_to_tokens(verbalization_id)}"
     return verbalization_id
 
 
-def trim_input_ids(input_ids: torch.tensor, pad_token_id, mask_token_id, num_masks: int):
+def trim_input_ids(
+    input_ids: torch.tensor, pad_token_id, mask_token_id, num_masks: int
+):
     """
     Trim a sequence of input ids by removing all padding tokens and keeping at most a specific number of mask tokens.
 
@@ -339,4 +373,4 @@ def distillation_loss(predictions, targets, temperature):
     """Compute the distillation loss (KL divergence between predictions and targets) as described in the PET paper"""
     p = F.log_softmax(predictions / temperature, dim=1)
     q = F.softmax(targets / temperature, dim=1)
-    return F.kl_div(p, q, reduction='sum') * (temperature ** 2) / predictions.shape[0]
+    return F.kl_div(p, q, reduction="sum") * (temperature**2) / predictions.shape[0]
